@@ -1,0 +1,68 @@
+name: Daily Metro Commute Generator
+
+on:
+  schedule:
+    # 00:30 UTC = 06:00 AM IST (Monday to Friday)
+    - cron: '30 0 * * 1-5'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub website
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python Dependencies
+        run: pip install google-genai edge-tts pydub mutagen feedparser
+
+      - name: Get Current Date
+        id: date
+        run: echo "date=$(date +'%Y_%m_%d')" >> $GITHUB_OUTPUT
+
+      - name: Run Commute Generator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PODCAST_BASE_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+          AUDIO_DOWNLOAD_BASE_URL: "https://github.com/${{ github.repository }}/releases/download/commute-${{ steps.date.outputs.date }}"
+        run: python generate_commute.py
+
+      - name: Upload MP3 to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: commute-${{ steps.date.outputs.date }}
+          name: Commute Episode ${{ steps.date.outputs.date }}
+          files: public/episodes/*.mp3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit Updated State
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          git commit -m "Update commute state [skip ci]" || echo "No state changes"
+          git push
+
+      - name: Deploy feed.xml to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: false

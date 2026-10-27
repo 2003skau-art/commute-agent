@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>Daily Metro Commute</title>
+    <link>http://192.168.1.13:8000</link>
+    <description>Hanuman Chalisa, Verse Reflections, Devotional Music, and Daily Briefing</description>
+    <language>en-in</language>
+    <itunes:explicit>false</itunes:explicit>
+    <item>
+      <title>Tue, 27 Oct - Verses 1-2 &amp; Mars (Mangala)</title>
+      <guid isPermaLink="false">commute_2026_10_27.mp3</guid>
+      <pubDate>Tue, 27 Oct 2026 20:21:06 +0530</pubDate>
+      <enclosure url="http://192.168.1.13:8000/episodes/commute_2026_10_27.mp3" length="39213233" type="audio/mpeg"/>
+      <itunes:duration>2448</itunes:duration>
+    </item>
+  </channel>
+</rss>
