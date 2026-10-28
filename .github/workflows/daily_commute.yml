@@ -11,6 +11,9 @@ permissions:
   pages: write
   id-token: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,13 +27,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install FFmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Install Python Dependencies
-        run: pip install google-genai edge-tts pydub mutagen feedparser
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-genai edge-tts pydub mutagen feedparser
 
       - name: Get Current Date
         id: date
@@ -40,17 +44,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PODCAST_BASE_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-          AUDIO_DOWNLOAD_BASE_URL: "https://github.com/${{ github.repository }}/releases/download/commute-${{ steps.date.outputs.date }}"
         run: python generate_commute.py
-
-      - name: Upload MP3 to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: commute-${{ steps.date.outputs.date }}
-          name: Commute Episode ${{ steps.date.outputs.date }}
-          files: public/episodes/*.mp3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Commit Updated State
         run: |
@@ -60,7 +54,7 @@ jobs:
           git commit -m "Update commute state [skip ci]" || echo "No state changes"
           git push
 
-      - name: Deploy feed.xml to GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
